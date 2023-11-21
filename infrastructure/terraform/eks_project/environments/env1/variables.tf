@@ -34,10 +34,15 @@ locals {
 
   name            = "${var.prefix}-auth0-eks"
   cluster_version = "1.28"
-  instance_types  = ["t2.large"] # can be multiple, comma separated
+  instance_types  = ["t2.small"] # can be multiple, comma separated
 
   vpc_cidr = "10.0.0.0/16"
 
+  aws_account_id = data.aws_caller_identity.current.account_id
+  
+  # the role, which will be granted access on AWS console > EKS
+  # to avoid the error "Your current IAM principal doesnt have access to Kubernetes objects on this cluster"
+  aws_federation_iam_rolename="AWSReservedSSO_AdministratorAccess-unrestricted_58c9bbf239970a34"
 
   tags = {
     Terraform = "true"

@@ -29,9 +29,9 @@ module "eks" {
   eks_managed_node_groups = {
     initial = {
       instance_types = local.instance_types
-      min_size       = 2
-      max_size       = 4
-      desired_size   = 3
+      min_size       = 1
+      max_size       = 2
+      desired_size   = 1
       subnet_ids     = module.vpc.private_subnets
     }
   }
@@ -63,6 +63,30 @@ resource "null_resource" "kubeconfig" {
     command = "aws eks --region ${local.aws_region}  update-kubeconfig --name $AWS_CLUSTER_NAME"
     environment = {
       AWS_CLUSTER_NAME = local.name
+    }
+  }
+}
+
+
+
+# Define a null_resource to trigger the script after the EKS cluster is created
+resource "null_resource" "enable_federated_role_for_eksconsole_script" {
+  # This resource depends on the creation of the EKS cluster
+  depends_on = [module.eks.cluster_id]
+
+  triggers = {
+    eks_cluster_id = module.eks.cluster_id
+  }
+
+  # Use the local-exec provisioner to execute your shell script
+  provisioner "local-exec" {
+    command = "bash enableRoleForEksIdempotent.sh"
+    
+    # You can also use environment variables or pass data to the script
+    environment = {
+      rolename = local.aws_federation_iam_rolename
+      accountId = local.aws_account_id
+      clustername = module.eks.cluster_name
     }
   }
 }
